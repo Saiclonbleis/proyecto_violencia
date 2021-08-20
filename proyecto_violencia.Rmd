@@ -1,0 +1,558 @@
+proyecto final para la materia Laboratorio de Politicas Publicas en la Universidad de Buenos Aires. Este proyecto busca una solución para el aumento de casos de violencia de genero durante el periodo de distanciamiento obligatorio en el año 2020
+
+```{r}
+#Cargo librerias
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(viridis)
+library(hrbrthemes)
+
+```
+
+```{r}
+#Cargo datasets
+
+
+temp <- tempfile()
+temp2 <- tempfile()
+
+# Asignamos a la variable 'temp' el archivo en cuestiÃ³n
+Archivo_2020 = "http://datos.jus.gob.ar/dataset/42720e56-2274-4ad5-820d-c366d784bc8c/resource/fa9512af-faea-4c72-bcb1-f375d31af509/download/llamados-atendidos-violencia-familiar-2020.zip"
+download.file(Archivo_2020, temp)
+
+Archivo_2019 = "http://datos.jus.gob.ar/dataset/42720e56-2274-4ad5-820d-c366d784bc8c/resource/9f4bb1d4-d64c-47e0-8da2-93be01a9ae4d/download/llamados-atendidos-violencia-familiar-2019.zip"
+download.file(Archivo_2019, temp2)
+
+
+
+# Utilizamos la funcion 'unz' para extraer el archivo CSV y lo asignamos a la variable 'temp'
+Archivo2020_abril = unz(temp, "llamados-atendidos-violencia-familiar-202004.csv")
+Archivo2020_mayo = unz(temp,  "llamados-atendidos-violencia-familiar-202005.csv")
+Archivo2020_junio = unz(temp,  "llamados-atendidos-violencia-familiar-202006.csv")
+Archivo2019_trimestre2 = unz(temp2, "llamados-atendidos-violencia-familiar-2019-trimestre-2.csv")
+
+
+
+# Introducimos los datos del CSV en la tabla PIB. Aqui le indicamos a la funcion
+# que el archivo tiene cabecera y que el separador de campos es una coma.
+datos_Caba_abril_2020 <- read.csv(file=Archivo2020_abril, header=TRUE, sep=",")
+datos_caba_mayo_2020 <- read.csv(file=Archivo2020_mayo, header=TRUE, sep=",")
+datos_caba_junio_2020 <- read.csv(file=Archivo2020_junio, header=TRUE, sep=",")
+datos_segundo_trimestre_2019 <- read.csv(file=Archivo2019_trimestre2, header=TRUE, sep=",")
+
+#borramos los archivos de mas
+
+rm(Archivo_2019, 
+   Archivo_2020, 
+   Archivo2019_trimestre2, 
+   Archivo2020_abril, 
+   Archivo2020_mayo, 
+   Archivo2020_junio, 
+   temp, 
+   temp2)
+```
+
+```{r}
+#Limpiamos los datos
+#########mayo y abril 2020#########
+datos_caba_abril_2020_limpio <- datos_Caba_abril_2020 %>%
+  
+  mutate(fecha =ymd_hms(llamado_fecha_hora)) %>% 
+  
+  mutate(dia = day(fecha)) %>%
+  
+  mutate(hora = hour(fecha)) %>%
+  
+  mutate(ano = year(fecha)) %>%
+  
+  filter(victima_genero != "Masculino") %>%
+  
+  group_by(dia, hora)
+
+datos_caba_mayo_limpio_2020 <- datos_caba_mayo_2020 %>%
+  
+  mutate(fecha =ymd_hms(llamado_fecha_hora)) %>% 
+  
+  mutate(dia = day(fecha)) %>%
+  
+  mutate(hora = hour(fecha)) %>%
+  
+  mutate(ano = year(fecha)) %>%
+ 
+   filter(victima_genero != "Masculino") %>%
+  
+  group_by(dia, hora)
+
+
+datos_caba_junio_limpio_2020 <- datos_caba_junio_2020 %>%
+  
+  mutate(fecha =ymd_hms(llamado_fecha_hora)) %>% 
+  
+  mutate(dia = day(fecha)) %>%
+  
+  mutate(hora = hour(fecha)) %>%
+  
+  mutate(ano = year(fecha)) %>%
+ 
+  filter(victima_genero != "Masculino") %>%
+   
+  group_by(dia, hora)
+
+
+
+#############mayo y abril 2019###############
+datos_caba_mayo_2019_limpio <- datos_segundo_trimestre_2019 %>%
+  
+  mutate(fecha =ymd_hms(llamado_fecha_hora)) %>% 
+  
+  mutate(mes = month(fecha, label = TRUE)) %>%
+  
+  mutate(dia = day(fecha)) %>%
+  
+  mutate(hora = hour(fecha)) %>%
+  
+  filter(victima_genero != "Masculino") %>%
+  
+  group_by(dia, hora) %>%
+  
+  mutate(ano = year(fecha)) %>%
+  
+  filter(mes == "may")
+
+datos_caba_abril_2019_limpio <- datos_segundo_trimestre_2019 %>%
+  
+  mutate(fecha =ymd_hms(llamado_fecha_hora)) %>% 
+  
+  mutate(mes = month(fecha, label = TRUE)) %>%
+  
+  mutate(dia = day(fecha)) %>%
+  
+  mutate(hora = hour(fecha)) %>%
+  
+  filter(victima_genero != "Masculino") %>%
+  
+  group_by(dia, hora) %>%
+  
+  mutate(ano = year(fecha)) %>%
+  
+  filter(mes == "abr")
+
+
+
+datos_caba_junio_2019_limpio <- datos_segundo_trimestre_2019 %>%
+  
+  mutate(fecha =ymd_hms(llamado_fecha_hora)) %>% 
+  
+  mutate(mes = month(fecha, label = TRUE)) %>%
+  
+  mutate(dia = day(fecha)) %>%
+  
+  mutate(hora = hour(fecha)) %>%
+  
+  filter(victima_genero != "Masculino") %>%
+  
+  group_by(dia, hora) %>%
+  
+  mutate(ano = year(fecha)) %>%
+  
+  filter(mes == "jun")
+```
+
+```{r}
+############datos de casos por mes################
+#############junio##########
+
+casos_mes_junio_2019 <- datos_caba_junio_2019_limpio %>%
+  
+  group_by(ano) %>%
+  
+  count()
+
+casos_mes_junio_2020 <- datos_caba_junio_limpio_2020 %>%
+  
+  group_by(ano) %>%
+  
+  count()
+
+
+
+
+############mayo################
+casos_mes_mayo_2019 <- datos_caba_mayo_2019_limpio %>%
+  
+  group_by(ano) %>%
+  
+  count()
+
+casos_mes_mayo_2020 <- datos_caba_mayo_limpio_2020 %>%
+  
+  group_by(ano) %>%
+  
+  count()
+
+#####ABRIL######
+
+casos_mes_abril_2019 <- datos_caba_abril_2019_limpio %>%
+  
+  group_by(ano) %>%
+  
+  count()
+
+casos_mes_abril_2020 <- datos_caba_abril_2020_limpio %>%
+  
+  group_by(ano) %>%
+  
+  count()
+
+
+
+
+#Datos para comparar mayo durante los anos 2019 y 2020
+
+comparativa_mayo <- casos_mes_mayo_2020%>%
+  
+  bind_rows(casos_mes_mayo_2019) 
+
+
+comparativa_junio = casos_mes_junio_2020%>%
+  
+  bind_rows(casos_mes_junio_2019) 
+```
+
+```{r}
+#################Datos de casos por dia###############
+#################Abril############
+datos_abril_2020_dia <-  datos_caba_abril_2020_limpio %>%
+  
+  group_by(dia, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_abril_2019_dia <-  datos_caba_abril_2019_limpio %>%
+  
+  group_by(dia, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_abril_dia_final <- datos_abril_2019_dia %>%
+  
+  bind_rows(datos_abril_2020_dia)
+
+#################Mayo###############
+datos_mayo_2020_dia <-  datos_caba_mayo_limpio_2020 %>%
+  
+  group_by(dia, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_mayo_2019_dia <-  datos_caba_mayo_2019_limpio %>%
+  
+  group_by(dia, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_mayo_dia_final <- datos_mayo_2020_dia %>%
+  
+  bind_rows(datos_mayo_2019_dia) 
+
+datos_mayo_dia_final_2 <- datos_mayo_2020_dia %>%
+  
+  bind_rows(datos_mayo_2019_dia)
+
+
+#########junio################
+
+
+
+datos_junio_2020_dia <-  datos_caba_junio_limpio_2020 %>%
+  
+  group_by(dia, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_junio_2019_dia <-  datos_caba_junio_2019_limpio %>%
+  
+  group_by(dia, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_junio_dia_final <- datos_junio_2020_dia %>%
+  
+  bind_rows(datos_junio_2019_dia) 
+
+datos_junio_dia_final_2 <- datos_junio_2020_dia %>%
+  
+  bind_rows(datos_junio_2019_dia)
+```
+
+```{r}
+#####################Datos de casos por hora#################
+######### junio ########
+
+datos_junio_2020_hora <-  datos_caba_junio_limpio_2020 %>%
+  
+  group_by(hora, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_junio_2019_hora <-  datos_caba_junio_2019_limpio %>%
+  
+  group_by(hora, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_junio_hora_final <- datos_junio_2020_hora %>%
+  
+  bind_rows(datos_junio_2019_hora) 
+
+
+##################Mayo#################
+datos_mayo_2020_hora <-  datos_caba_mayo_limpio_2020 %>%
+  
+  group_by(hora, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_mayo_2019_hora <-  datos_caba_mayo_2019_limpio %>%
+  
+  group_by(hora, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_mayo_hora_final <- datos_mayo_2020_hora %>%
+  
+  bind_rows(datos_mayo_2019_hora)
+
+#########Abril###########
+datos_abril_2020_hora <-  datos_caba_abril_2020_limpio%>%
+  
+  group_by(hora, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_abril_2019_hora <-  datos_caba_abril_2019_limpio %>%
+  
+  group_by(hora, ano) %>%
+  
+  count() %>%
+  
+  summarise(Denuncias = sum(n))
+
+datos_abril_hora_final <- datos_abril_2020_hora %>%
+  
+  bind_rows(datos_abril_2019_hora)
+```
+
+```{r}
+####CUANTO AUMENTARON LAS DENUNCIAS####
+
+
+datos_mayo_prueba = spread(datos_mayo_dia_final_2, ano, Denuncias)
+datos_abril_prueba = spread(datos_abril_dia_final, ano, Denuncias)
+datos_junio_prueba = spread(datos_junio_dia_final_2, ano, Denuncias)
+
+
+sum(datos_mayo_prueba$`2020`)/sum(datos_mayo_prueba$`2019`)
+
+sum(datos_abril_prueba$`2020`)/sum(datos_abril_prueba$`2019`)
+
+sum(datos_junio_prueba$`2020`)/sum(datos_junio_prueba$`2019`)
+
+(sum(datos_mayo_prueba$`2020`) + sum(datos_abril_prueba$`2020`)+ sum(datos_junio_prueba$`2020`))/(sum(datos_mayo_prueba$`2019`) + sum(datos_abril_prueba$`2019`)+ sum(datos_junio_prueba$`2019`))
+```
+
+```{r}
+##########Graficos############
+############Comparacion denuncias totales Mayo#########
+Grafico_comparativo_mayo <- comparativa_mayo %>%
+  
+  ggplot(aes(x = ano, y = n)) +
+  
+  geom_bar(stat = "identity", fill = "#1A081F") +
+  
+  scale_x_continuous("ano", breaks = c(2019, 2020)) +
+  
+  ylab("Denuncias") +
+  
+  theme_classic() +
+  
+  ggtitle("Denuncias por mes, mayo")
+
+#####comparativo junio #########
+Grafico_comparativo_junio <- comparativa_junio %>%
+  
+  ggplot(aes(x = ano, y = n)) +
+  
+  geom_bar(stat = "identity", fill = "#1A081F") +
+  
+  scale_x_continuous("ano", breaks = c(2019, 2020)) +
+  
+  ylab("Denuncias") +
+  
+  theme_classic() +
+  
+  ggtitle("Denuncias por mes, junio")
+
+
+
+###########Graficos Mayo comparando dias###############
+grafico_mayo_dias <- datos_mayo_dia_final_2 %>%
+  
+  ggplot(aes(x = dia, y = Denuncias, fill = as.factor(ano),  group = ano)) +
+  
+  geom_bar(stat = "identity",  position = "dodge") +
+  
+  scale_x_continuous("dia", breaks = c(1:31)) +
+  
+  scale_y_continuous("Denuncias") +
+  
+  ggtitle("Cantidad de denuncias diarias, periodo mayo 2019-2020")
+
+grafico_mayo_dias +scale_fill_manual(values=c("#1A081F", "#05676E"))
+
+
+
+#####GRAFICO POR DIA PERO EN LINEAS#####
+
+
+
+
+prueba1 <- datos_mayo_prueba %>% 
+  
+  ggplot() + 
+  
+  geom_line(aes(x=dia, y=datos_mayo_prueba$`2019`,color="2019"), size = 1.4) + 
+  
+  geom_line(aes(x=dia, y=datos_mayo_prueba$`2020`,color="2020"),  size = 1.4) + 
+  
+  geom_point(aes(x=dia, y=datos_mayo_prueba$`2020`),color="#1A081F", size = 2.5)  +
+  
+  geom_point(aes(x=dia, y=datos_mayo_prueba$`2019`),color="#05676E", size = 2.5)  +
+  
+  scale_colour_manual("", 
+                      breaks = c("2020", "2019"),
+                      values = c("2020"="#1A081F", "2019"="#05676E")) +
+  
+  scale_x_continuous("dia", breaks = c(1:31)) +
+  
+  scale_y_continuous("Denuncias") +
+  
+  ggtitle("Cantidad de denuncias diarias, periodo mayo 2019-2020")
+
+prueba1
+
+###########Grafico abril comparando dias###############
+
+
+grafico_abril_dias <- datos_abril_dia_final %>%
+  
+  ggplot(aes(x = dia, y = Denuncias, fill = as.factor(ano),  group = ano)) +
+  
+  geom_bar(stat = "identity",  position = "dodge") +
+  
+  scale_x_continuous("dia", breaks = c(1:30)) +
+  
+  scale_y_continuous("Denuncias") +
+  
+  ggtitle("Cantidad de denuncias diarias, periodo abril 2019-2020")
+
+grafico_abril_dias + scale_fill_manual(values=c("#1A081F", "#05676E"))
+
+
+
+#####ABRIL POR DIA EN LINEAS#######
+
+
+
+prueba2 <- datos_abril_prueba  %>% 
+  
+  ggplot() + 
+  
+  geom_line(aes(x=dia, y=datos_abril_prueba$`2019`,color="2019"), size = 1.4) + 
+  
+  geom_line(aes(x=dia, y=datos_abril_prueba$`2020`,color="2020"),  size = 1.4) + 
+  
+  geom_point(aes(x=dia, y=datos_abril_prueba$`2020`),color="#1A081F", size = 2.5)  +
+  
+  geom_point(aes(x=dia, y=datos_abril_prueba$`2019`),color="#05676E", size = 2.5)  +
+  
+  scale_colour_manual("", 
+                      breaks = c("2020", "2019"),
+                      values = c("2020"="#1A081F", "2019"="#05676E")) +
+  
+  scale_x_continuous("dia", breaks = c(1:31)) +
+  
+  scale_y_continuous("Denuncias") +
+  
+  ggtitle("Cantidad de denuncias diarias, periodo abril 2019-2020")
+
+prueba2
+
+#######JUNIO POR DIA EN LINEAS#########
+
+
+prueba3 <- datos_junio_prueba %>% 
+  
+  ggplot() + 
+  
+  geom_line(aes(x=dia, y=datos_junio_prueba$`2019`,color="2019"), size = 1.4) + 
+  
+  geom_line(aes(x=dia, y=datos_junio_prueba$`2020`,color="2020"),  size = 1.4) + 
+  
+  geom_point(aes(x=dia, y=datos_junio_prueba$`2020`),color="#1A081F", size = 2.5)  +
+  
+  geom_point(aes(x=dia, y=datos_junio_prueba$`2019`),color="#05676E", size = 2.5)  +
+  
+  scale_colour_manual("", 
+                      breaks = c("2020", "2019"),
+                      values = c("2020"="#1A081F", "2019"="#05676E")) +
+  
+  scale_x_continuous("dia", breaks = c(1:31)) +
+  
+  scale_y_continuous("Denuncias") +
+  
+  ggtitle("Cantidad de denuncias diarias, periodo junio 2019-2020")
+
+prueba3
+
+###########Graficos mayo comparando horas##############
+grafico_mayo_hora <- datos_mayo_hora_final %>%
+  
+  ggplot(aes(x = hora, y = Denuncias, fill = as.factor(ano),  group = ano)) +
+  
+  geom_bar(stat = "identity",  position = "dodge") +
+  
+  scale_x_continuous("hora", breaks = c(00:23)) +
+  
+  scale_y_continuous("Denuncias") +
+  
+  ggtitle("Cantidad de denuncias por hora, periodo mayo 2019-2020")
+
+grafico_mayo_hora + scale_fill_manual(values=c("#1A081F", "#05676E"))
+```
+
